@@ -12,6 +12,27 @@ import org.slf4j.LoggerFactory;
 
 import com.zzd.myfpgrowth.service.SolveService;
 import com.zzd.myfpgrowth.util.UtilTool;
+/*
+ 第一遍扫描数据，找出频繁1项集L，按降序排序
+第二遍扫描数据：
+对每个transaction，过滤不频繁集合，剩下的频繁项集按L顺序排序
+把每个transaction的频繁1项集插入到FP-tree中，相同前缀的路径可以共用
+同时增加一个header table，把FP-tree中相同item连接起来，也是降序排序
+ 
+ 频繁项挖掘
+从header table的最下面的item开始，构造每个item的条件模式基（conditional pattern base）
+顺着header table中item的链表，找出所有包含该item的前缀路径，这些前缀路径就是该item的条件模式基（CPB）
+所有这些CPB的频繁度（计数）为该路径上item的频繁度（计数）
+如包含p的其中一条路径是fcamp，该路径中p的频繁度为2，则该CPB fcam的频繁度为2
+ 
+ 构造条件FP-tree（conditional FP-tree）
+累加每个CPB上的item的频繁度（计数），过滤低于阈值的item，构建FP-tree
+如m的CPB{<fca:2>, <fcab:1>}，f:3, c:3, a:3, b:1, 阈值假设为3，过滤掉b
+
+FP-Growh：递归的挖掘每个条件FP-tree，累加后缀频繁项集，直到找到FP-tree为空或者FP-tree只有一条路径（只有一条路径情况下，所有路径上item的组合都是频繁项集）
+ 
+更多的共用前缀：频繁的item会在树的上层，可以被更多的共享；升序排序会造成那些频繁出现的item出现在树的分支中，不能更多的共用前缀
+ */
 
 /**
  * FP-Tree：将事务数据表中的各个事务数据项按照支持度排序后， 把每个事务中的数据项按降序依次插入到一棵以 NULL为根结点的树中，
